@@ -64,10 +64,12 @@ def switch_theme(st,CONFIG):
                 'Theme:',['☀️','🌒'],
                 horizontal=True,
                 label_visibility="collapsed",
-                index=CONFIG.theme == 'dark',
+                # --- 修改此处 ---
+                index=int(CONFIG.theme == 'dark'), 
+                # ----------------
                 on_change=apply_theme,
                 key="theme",
-                args=[st,CONFIG,leftpad] # or rightpad
+                args=[st,CONFIG,leftpad] 
             )
         
 

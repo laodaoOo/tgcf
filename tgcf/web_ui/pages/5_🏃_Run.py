@@ -73,7 +73,7 @@ if check_password(st):
             CONFIG.pid = 0
             write_config(CONFIG)
             time.sleep(1)
-            st.experimental_rerun()
+            st.rerun()
 
         stop = st.button("Stop", type="primary")
         if stop:

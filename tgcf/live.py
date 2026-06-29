@@ -5,6 +5,10 @@ import os
 import sys
 from typing import Union
 
+# --- 新增引入 socks 库 ---
+import socks
+# ------------------------
+
 from telethon import TelegramClient, events, functions, types
 from telethon.sessions import StringSession
 from telethon.tl.custom.message import Message
@@ -123,11 +127,27 @@ async def start_sync() -> None:
     await load_async_plugins()
 
     SESSION = get_SESSION()
+
+    # --- 新增：从 .env 或环境变量中读取代理配置 ---
+    proxy_ip = os.getenv("TGCF_PROXY_IP")
+    proxy_port = os.getenv("TGCF_PROXY_PORT")
+    proxy_type_str = os.getenv("TGCF_PROXY_TYPE", "SOCKS5").upper()
+    
+    proxy_config = None
+    if proxy_ip and proxy_port:
+        proxy_type = socks.SOCKS5 if proxy_type_str == "SOCKS5" else socks.HTTP
+        proxy_config = (proxy_type, proxy_ip, int(proxy_port))
+        logging.info(f"Proxy enabled: {proxy_type_str} {proxy_ip}:{proxy_port}")
+    else:
+        logging.info("No proxy configured in .env, running directly.")
+    # ---------------------------------------------
+
     client = TelegramClient(
         SESSION,
         CONFIG.login.API_ID,
         CONFIG.login.API_HASH,
         sequential_updates=CONFIG.live.sequential_updates,
+        proxy=proxy_config  # --- 新增：将代理配置传入 Client ---
     )
     if CONFIG.login.user_type == 0:
         if CONFIG.login.BOT_TOKEN == "":

@@ -10,8 +10,10 @@ RUN apt-get update && \
 RUN pip install --upgrade poetry
 RUN python -m venv /venv
 COPY . .
+# 注意下面这一段，在最后加上了 pysocks 和 python-socks 的安装
 RUN poetry build && \
     /venv/bin/pip install --upgrade pip wheel setuptools &&\
-    /venv/bin/pip install dist/*.whl
+    /venv/bin/pip install dist/*.whl && \
+    /venv/bin/pip install pysocks python-socks
 EXPOSE 8501
 CMD tgcf-web

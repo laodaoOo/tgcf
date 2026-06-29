@@ -6,7 +6,12 @@
 
 import asyncio
 import logging
+import os
 import time
+
+# --- 新增引入 socks 库 ---
+import socks
+# ------------------------
 
 from telethon import TelegramClient
 from telethon.errors.rpcerrorlist import FloodWaitError
@@ -25,16 +30,35 @@ async def forward_job() -> None:
     clean_session_files()
 
     # load async plugins defined in plugin_models
-    await load_async_plugins()    
+    await load_async_plugins()  
 
     if CONFIG.login.user_type != 1:
         logging.warning(
             "You cannot use bot account for tgcf past mode. Telegram does not allow bots to access chat history."
         )
         return
+    
     SESSION = get_SESSION()
+
+    # --- 新增：从 .env 或环境变量中读取代理配置 ---
+    proxy_ip = os.getenv("TGCF_PROXY_IP")
+    proxy_port = os.getenv("TGCF_PROXY_PORT")
+    proxy_type_str = os.getenv("TGCF_PROXY_TYPE", "SOCKS5").upper()
+    
+    proxy_config = None
+    if proxy_ip and proxy_port:
+        proxy_type = socks.SOCKS5 if proxy_type_str == "SOCKS5" else socks.HTTP
+        proxy_config = (proxy_type, proxy_ip, int(proxy_port))
+        logging.info(f"Proxy enabled in past mode: {proxy_type_str} {proxy_ip}:{proxy_port}")
+    else:
+        logging.info("No proxy configured in .env, running directly in past mode.")
+    # ---------------------------------------------
+
     async with TelegramClient(
-        SESSION, CONFIG.login.API_ID, CONFIG.login.API_HASH
+        SESSION, 
+        CONFIG.login.API_ID, 
+        CONFIG.login.API_HASH,
+        proxy=proxy_config  # --- 新增：将代理配置传入 Client ---
     ) as client:
         config.from_to = await config.load_from_to(client, config.CONFIG.forwards)
         client: TelegramClient
